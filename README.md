@@ -56,7 +56,7 @@ Your application will be available at `http://localhost:3000`.
 Create a production build:
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 ## Deployment
