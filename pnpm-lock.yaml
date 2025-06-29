@@ -59,6 +59,9 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
+      downshift:
+        specifier: ^9.0.9
+        version: 9.0.9(react@19.1.0)
       drizzle-orm:
         specifier: ^0.41.0
         version: 0.41.0(@types/pg@8.11.6)(@vercel/postgres@0.10.0)(gel@2.0.2)(postgres@3.4.5)
@@ -1748,6 +1751,9 @@ packages:
     resolution: {integrity: sha512-k6WLKfunuqCYD3t6AsuPGvQWaKwuLLh2/xHNcX4qE+vIfDNXpSqnrhwA7O53R7WVQUnt8dVAIW+YHr7xTgOgGA==}
     engines: {node: '>= 0.8.0'}
 
+  compute-scroll-into-view@3.1.1:
+    resolution: {integrity: sha512-VRhuHOLoKYOy4UbilLbUzbYg93XLjv2PncJC50EuTWPA3gaja1UjBsUP/D/9/juV3vQFr6XBEzn9KCAHdUvOHw==}
+
   concat-stream@1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
     engines: {'0': node >= 0.8}
@@ -1898,6 +1904,11 @@ packages:
 
   dom-helpers@3.4.0:
     resolution: {integrity: sha512-LnuPJ+dwqKDIyotW1VzmOZ5TONUN7CwkCR5hrgawTUbkBGYdeoNLZo6nNfGkCrjtE1nXXaj7iMMpDa8/d9WoIA==}
+
+  downshift@9.0.9:
+    resolution: {integrity: sha512-ygOT8blgiz5liDuEFAIaPeU4dDEa+w9p6PHVUisPIjrkF5wfR59a52HpGWAVVMoWnoFO8po2mZSScKZueihS7g==}
+    peerDependencies:
+      react: '>=16.12.0'
 
   drizzle-dbml-generator@0.10.0:
     resolution: {integrity: sha512-cMZq9E3U3RlmE0uBeXyc6oWJ0royOkC6HiTlc9LDeMe+W87poZTzKoNYUyAxZrs4Q1RQtob+cGKiefV4ZoI8HA==}
@@ -2681,6 +2692,9 @@ packages:
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
+
+  react-is@18.2.0:
+    resolution: {integrity: sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==}
 
   react-lifecycles-compat@3.0.4:
     resolution: {integrity: sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==}
@@ -4531,6 +4545,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  compute-scroll-into-view@3.1.1: {}
+
   concat-stream@1.6.2:
     dependencies:
       buffer-from: 1.1.2
@@ -4652,6 +4668,15 @@ snapshots:
   dom-helpers@3.4.0:
     dependencies:
       '@babel/runtime': 7.27.0
+
+  downshift@9.0.9(react@19.1.0):
+    dependencies:
+      '@babel/runtime': 7.27.0
+      compute-scroll-into-view: 3.1.1
+      prop-types: 15.8.1
+      react: 19.1.0
+      react-is: 18.2.0
+      tslib: 2.8.1
 
   drizzle-dbml-generator@0.10.0(drizzle-orm@0.41.0(@types/pg@8.11.6)(@vercel/postgres@0.10.0)(gel@2.0.2)(postgres@3.4.5)):
     dependencies:
@@ -5393,6 +5418,8 @@ snapshots:
       react-dom: 19.1.0(react@19.1.0)
 
   react-is@16.13.1: {}
+
+  react-is@18.2.0: {}
 
   react-lifecycles-compat@3.0.4: {}
 

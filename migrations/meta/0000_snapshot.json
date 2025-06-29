@@ -1,5 +1,5 @@
 {
-  "id": "309f1f9a-8163-4451-b4d4-ece7f7b43df0",
+  "id": "6ef9779d-990a-44aa-8222-08f6088be356",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -37,13 +37,6 @@
           "type": "varchar(256)",
           "primaryKey": false,
           "notNull": false
-        },
-        "tags": {
-          "name": "tags",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::text[]"
         },
         "created_at": {
           "name": "created_at",
@@ -96,21 +89,6 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "areas_tags_idx": {
-          "name": "areas_tags_idx",
-          "columns": [
-            {
-              "expression": "tags",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
@@ -134,8 +112,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.comments": {
-      "name": "comments",
+    "public.crags": {
+      "name": "crags",
       "schema": "",
       "columns": {
         "id": {
@@ -144,9 +122,9 @@
           "primaryKey": true,
           "notNull": true
         },
-        "body": {
-          "name": "body",
-          "type": "text",
+        "name": {
+          "name": "name",
+          "type": "varchar(256)",
           "primaryKey": false,
           "notNull": true
         },
@@ -156,33 +134,21 @@
           "primaryKey": false,
           "notNull": true
         },
-        "issue_id": {
-          "name": "issue_id",
+        "area_id": {
+          "name": "area_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
+        "description": {
+          "name": "description",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "reactions": {
-          "name": "reactions",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "flagged_at": {
-          "name": "flagged_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "flagged_reason": {
-          "name": "flagged_reason",
-          "type": "timestamp",
+        "image_url": {
+          "name": "image_url",
+          "type": "varchar(256)",
           "primaryKey": false,
           "notNull": false
         },
@@ -208,8 +174,23 @@
         }
       },
       "indexes": {
-        "comments_organization_id_idx": {
-          "name": "comments_organization_id_idx",
+        "crags_name_idx": {
+          "name": "crags_name_idx",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "crags_organization_id_idx": {
+          "name": "crags_organization_id_idx",
           "columns": [
             {
               "expression": "organization_id",
@@ -223,8 +204,141 @@
           "method": "btree",
           "with": {}
         },
-        "comments_issue_id_idx": {
-          "name": "comments_issue_id_idx",
+        "crags_area_id_idx": {
+          "name": "crags_area_id_idx",
+          "columns": [
+            {
+              "expression": "area_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "crags_organization_id_organizations_id_fk": {
+          "name": "crags_organization_id_organizations_id_fk",
+          "tableFrom": "crags",
+          "tableTo": "organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "crags_area_id_areas_id_fk": {
+          "name": "crags_area_id_areas_id_fk",
+          "tableFrom": "crags",
+          "tableTo": "areas",
+          "columnsFrom": [
+            "area_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.issue_actions": {
+      "name": "issue_actions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issue_id": {
+          "name": "issue_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "referenced_issue_id": {
+          "name": "referenced_issue_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "action": {
+          "name": "action",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "issue_actions_organization_id_idx": {
+          "name": "issue_actions_organization_id_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "issue_actions_issue_id_idx": {
+          "name": "issue_actions_issue_id_idx",
           "columns": [
             {
               "expression": "issue_id",
@@ -238,8 +352,8 @@
           "method": "btree",
           "with": {}
         },
-        "comments_user_id_idx": {
-          "name": "comments_user_id_idx",
+        "issue_actions_user_id_idx": {
+          "name": "issue_actions_user_id_idx",
           "columns": [
             {
               "expression": "user_id",
@@ -253,11 +367,11 @@
           "method": "btree",
           "with": {}
         },
-        "comments_created_at_idx": {
-          "name": "comments_created_at_idx",
+        "issue_actions_referenced_issue_id_idx": {
+          "name": "issue_actions_referenced_issue_id_idx",
           "columns": [
             {
-              "expression": "created_at",
+              "expression": "referenced_issue_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -270,9 +384,9 @@
         }
       },
       "foreignKeys": {
-        "comments_organization_id_organizations_id_fk": {
-          "name": "comments_organization_id_organizations_id_fk",
-          "tableFrom": "comments",
+        "issue_actions_organization_id_organizations_id_fk": {
+          "name": "issue_actions_organization_id_organizations_id_fk",
+          "tableFrom": "issue_actions",
           "tableTo": "organizations",
           "columnsFrom": [
             "organization_id"
@@ -283,9 +397,9 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "comments_issue_id_issues_id_fk": {
-          "name": "comments_issue_id_issues_id_fk",
-          "tableFrom": "comments",
+        "issue_actions_issue_id_issues_id_fk": {
+          "name": "issue_actions_issue_id_issues_id_fk",
+          "tableFrom": "issue_actions",
           "tableTo": "issues",
           "columnsFrom": [
             "issue_id"
@@ -296,9 +410,206 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "comments_user_id_users_id_fk": {
-          "name": "comments_user_id_users_id_fk",
-          "tableFrom": "comments",
+        "issue_actions_user_id_users_id_fk": {
+          "name": "issue_actions_user_id_users_id_fk",
+          "tableFrom": "issue_actions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "issue_actions_referenced_issue_id_issues_id_fk": {
+          "name": "issue_actions_referenced_issue_id_issues_id_fk",
+          "tableFrom": "issue_actions",
+          "tableTo": "issues",
+          "columnsFrom": [
+            "referenced_issue_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.issue_assignees": {
+      "name": "issue_assignees",
+      "schema": "",
+      "columns": {
+        "issue_id": {
+          "name": "issue_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "issue_assignees_issue_id_idx": {
+          "name": "issue_assignees_issue_id_idx",
+          "columns": [
+            {
+              "expression": "issue_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "issue_assignees_user_id_idx": {
+          "name": "issue_assignees_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "issue_assignees_issue_id_user_id_unique": {
+          "name": "issue_assignees_issue_id_user_id_unique",
+          "columns": [
+            {
+              "expression": "issue_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "issue_assignees_issue_id_issues_id_fk": {
+          "name": "issue_assignees_issue_id_issues_id_fk",
+          "tableFrom": "issue_assignees",
+          "tableTo": "issues",
+          "columnsFrom": [
+            "issue_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "issue_assignees_user_id_users_id_fk": {
+          "name": "issue_assignees_user_id_users_id_fk",
+          "tableFrom": "issue_assignees",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "issue_assignees_issue_id_user_id_pk": {
+          "name": "issue_assignees_issue_id_user_id_pk",
+          "columns": [
+            "issue_id",
+            "user_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.issue_upvotes": {
+      "name": "issue_upvotes",
+      "schema": "",
+      "columns": {
+        "issue_id": {
+          "name": "issue_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "issue_upvotes_issue_id_issues_id_fk": {
+          "name": "issue_upvotes_issue_id_issues_id_fk",
+          "tableFrom": "issue_upvotes",
+          "tableTo": "issues",
+          "columnsFrom": [
+            "issue_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "issue_upvotes_user_id_users_id_fk": {
+          "name": "issue_upvotes_user_id_users_id_fk",
+          "tableFrom": "issue_upvotes",
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
@@ -332,17 +643,53 @@
           "primaryKey": false,
           "notNull": true
         },
+        "type": {
+          "name": "type",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
         "title": {
           "name": "title",
           "type": "varchar(256)",
           "primaryKey": false,
           "notNull": true
         },
-        "description": {
-          "name": "description",
+        "text": {
+          "name": "text",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "severity": {
+          "name": "severity",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bolt_or_anchor": {
+          "name": "bolt_or_anchor",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bolt_type": {
+          "name": "bolt_type",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bolt_number": {
+          "name": "bolt_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bolt_issue": {
+          "name": "bolt_issue",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false
         },
         "organization_id": {
           "name": "organization_id",
@@ -356,11 +703,29 @@
           "primaryKey": false,
           "notNull": false
         },
+        "crag_id": {
+          "name": "crag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wall_id": {
+          "name": "wall_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "route_id": {
+          "name": "route_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_by_id": {
           "name": "created_by_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "closed_at": {
           "name": "closed_at",
@@ -399,32 +764,12 @@
           "primaryKey": false,
           "notNull": false
         },
-        "num_comments": {
-          "name": "num_comments",
+        "num_upvotes": {
+          "name": "num_upvotes",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 0
-        },
-        "assignee_ids": {
-          "name": "assignee_ids",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::text[]"
-        },
-        "tags": {
-          "name": "tags",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::text[]"
-        },
-        "reactions": {
-          "name": "reactions",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -508,6 +853,36 @@
           "method": "btree",
           "with": {}
         },
+        "issues_crag_id_idx": {
+          "name": "issues_crag_id_idx",
+          "columns": [
+            {
+              "expression": "crag_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "issues_wall_id_idx": {
+          "name": "issues_wall_id_idx",
+          "columns": [
+            {
+              "expression": "wall_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "issues_organization_id_idx": {
           "name": "issues_organization_id_idx",
           "columns": [
@@ -522,12 +897,168 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        }
+      },
+      "foreignKeys": {
+        "issues_organization_id_organizations_id_fk": {
+          "name": "issues_organization_id_organizations_id_fk",
+          "tableFrom": "issues",
+          "tableTo": "organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
-        "issues_tags_idx": {
-          "name": "issues_tags_idx",
+        "issues_area_id_areas_id_fk": {
+          "name": "issues_area_id_areas_id_fk",
+          "tableFrom": "issues",
+          "tableTo": "areas",
+          "columnsFrom": [
+            "area_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "issues_crag_id_crags_id_fk": {
+          "name": "issues_crag_id_crags_id_fk",
+          "tableFrom": "issues",
+          "tableTo": "crags",
+          "columnsFrom": [
+            "crag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "issues_wall_id_walls_id_fk": {
+          "name": "issues_wall_id_walls_id_fk",
+          "tableFrom": "issues",
+          "tableTo": "walls",
+          "columnsFrom": [
+            "wall_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "issues_route_id_routes_id_fk": {
+          "name": "issues_route_id_routes_id_fk",
+          "tableFrom": "issues",
+          "tableTo": "routes",
+          "columnsFrom": [
+            "route_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "issues_created_by_id_users_id_fk": {
+          "name": "issues_created_by_id_users_id_fk",
+          "tableFrom": "issues",
+          "tableTo": "users",
+          "columnsFrom": [
+            "created_by_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "issues_closed_by_id_users_id_fk": {
+          "name": "issues_closed_by_id_users_id_fk",
+          "tableFrom": "issues",
+          "tableTo": "users",
+          "columnsFrom": [
+            "closed_by_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.media": {
+      "name": "media",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "content_type": {
+          "name": "content_type",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issue_id": {
+          "name": "issue_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issue_action_id": {
+          "name": "issue_action_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "issue_media_issue_id_idx": {
+          "name": "issue_media_issue_id_idx",
           "columns": [
             {
-              "expression": "tags",
+              "expression": "issue_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -539,7 +1070,34 @@
           "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "media_issue_id_issues_id_fk": {
+          "name": "media_issue_id_issues_id_fk",
+          "tableFrom": "media",
+          "tableTo": "issues",
+          "columnsFrom": [
+            "issue_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "media_issue_action_id_issue_actions_id_fk": {
+          "name": "media_issue_action_id_issue_actions_id_fk",
+          "tableFrom": "media",
+          "tableTo": "issue_actions",
+          "columnsFrom": [
+            "issue_action_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -620,6 +1178,372 @@
         }
       },
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.routes": {
+      "name": "routes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "grade": {
+          "name": "grade",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wall_id": {
+          "name": "wall_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "anchor_type": {
+          "name": "anchor_type",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_2_bolt_anchor": {
+          "name": "is_2_bolt_anchor",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "num_bolts": {
+          "name": "num_bolts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "num_pins": {
+          "name": "num_pins",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "stars": {
+          "name": "stars",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "bolt_types": {
+          "name": "bolt_types",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_worked_on_at": {
+          "name": "last_worked_on_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_worked_on_by": {
+          "name": "last_worked_on_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "routes_name_idx": {
+          "name": "routes_name_idx",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "routes_organization_id_idx": {
+          "name": "routes_organization_id_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "routes_wall_id_walls_id_fk": {
+          "name": "routes_wall_id_walls_id_fk",
+          "tableFrom": "routes",
+          "tableTo": "walls",
+          "columnsFrom": [
+            "wall_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "routes_organization_id_organizations_id_fk": {
+          "name": "routes_organization_id_organizations_id_fk",
+          "tableFrom": "routes",
+          "tableTo": "organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "routes_last_worked_on_by_users_id_fk": {
+          "name": "routes_last_worked_on_by_users_id_fk",
+          "tableFrom": "routes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "last_worked_on_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.taggings": {
+      "name": "taggings",
+      "schema": "",
+      "columns": {
+        "tag_id": {
+          "name": "tag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "area_id": {
+          "name": "area_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "crag_id": {
+          "name": "crag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wall_id": {
+          "name": "wall_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issue_id": {
+          "name": "issue_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "route_id": {
+          "name": "route_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "taggings_tag_id_tags_id_fk": {
+          "name": "taggings_tag_id_tags_id_fk",
+          "tableFrom": "taggings",
+          "tableTo": "tags",
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "taggings_organization_id_organizations_id_fk": {
+          "name": "taggings_organization_id_organizations_id_fk",
+          "tableFrom": "taggings",
+          "tableTo": "organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "taggings_area_id_areas_id_fk": {
+          "name": "taggings_area_id_areas_id_fk",
+          "tableFrom": "taggings",
+          "tableTo": "areas",
+          "columnsFrom": [
+            "area_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "taggings_crag_id_crags_id_fk": {
+          "name": "taggings_crag_id_crags_id_fk",
+          "tableFrom": "taggings",
+          "tableTo": "crags",
+          "columnsFrom": [
+            "crag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "taggings_wall_id_walls_id_fk": {
+          "name": "taggings_wall_id_walls_id_fk",
+          "tableFrom": "taggings",
+          "tableTo": "walls",
+          "columnsFrom": [
+            "wall_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "taggings_issue_id_issues_id_fk": {
+          "name": "taggings_issue_id_issues_id_fk",
+          "tableFrom": "taggings",
+          "tableTo": "issues",
+          "columnsFrom": [
+            "issue_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "taggings_route_id_routes_id_fk": {
+          "name": "taggings_route_id_routes_id_fk",
+          "tableFrom": "taggings",
+          "tableTo": "routes",
+          "columnsFrom": [
+            "route_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -875,6 +1799,148 @@
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.walls": {
+      "name": "walls",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "crag_id": {
+          "name": "crag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "walls_name_idx": {
+          "name": "walls_name_idx",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "walls_organization_id_idx": {
+          "name": "walls_organization_id_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "walls_crag_id_idx": {
+          "name": "walls_crag_id_idx",
+          "columns": [
+            {
+              "expression": "crag_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "walls_organization_id_organizations_id_fk": {
+          "name": "walls_organization_id_organizations_id_fk",
+          "tableFrom": "walls",
+          "tableTo": "organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "walls_crag_id_crags_id_fk": {
+          "name": "walls_crag_id_crags_id_fk",
+          "tableFrom": "walls",
+          "tableTo": "crags",
+          "columnsFrom": [
+            "crag_id"
           ],
           "columnsTo": [
             "id"

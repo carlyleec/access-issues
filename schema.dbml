@@ -1,0 +1,303 @@
+table areas {
+  id uuid [pk, not null]
+  name varchar(256) [not null]
+  organization_id uuid [not null]
+  description text [not null]
+  image_url varchar(256)
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+  deleted_at timestamp
+
+  indexes {
+    name [name: 'areas_name_idx']
+    organization_id [name: 'areas_organization_id_idx']
+  }
+}
+
+table crags {
+  id uuid [pk, not null]
+  name varchar(256) [not null]
+  organization_id uuid [not null]
+  area_id uuid [not null]
+  description text [not null]
+  image_url varchar(256)
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+  deleted_at timestamp
+
+  indexes {
+    name [name: 'crags_name_idx']
+    organization_id [name: 'crags_organization_id_idx']
+    area_id [name: 'crags_area_id_idx']
+  }
+}
+
+table issue_actions {
+  id uuid [pk, not null]
+  organization_id uuid [not null]
+  issue_id uuid [not null]
+  user_id uuid [not null]
+  referenced_issue_id uuid
+  action varchar(256) [not null]
+  text text
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+  deleted_at timestamp
+
+  indexes {
+    organization_id [name: 'issue_actions_organization_id_idx']
+    issue_id [name: 'issue_actions_issue_id_idx']
+    user_id [name: 'issue_actions_user_id_idx']
+    referenced_issue_id [name: 'issue_actions_referenced_issue_id_idx']
+  }
+}
+
+table issue_assignees {
+  issue_id uuid [not null]
+  user_id uuid [not null]
+
+  indexes {
+    issue_id [name: 'issue_assignees_issue_id_idx']
+    user_id [name: 'issue_assignees_user_id_idx']
+    (issue_id, user_id) [name: 'issue_assignees_issue_id_user_id_unique', unique]
+    (issue_id, user_id) [pk]
+  }
+}
+
+table issue_upvotes {
+  issue_id uuid [not null]
+  user_id uuid [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+  deleted_at timestamp
+}
+
+table issues {
+  id uuid [pk, not null]
+  number integer [not null]
+  type varchar(256) [not null]
+  title varchar(256) [not null]
+  text text [not null]
+  severity varchar(256) [not null]
+  bolt_or_anchor varchar(256)
+  bolt_type varchar(256)
+  bolt_number integer
+  bolt_issue varchar(256)
+  organization_id uuid [not null]
+  area_id uuid
+  crag_id uuid
+  wall_id uuid
+  route_id uuid
+  created_by_id uuid
+  closed_at timestamp
+  closed_by_id uuid
+  closed_reason varchar(10)
+  state varchar(10) [not null, default: 'open']
+  flagged_at timestamp
+  flagged_reason timestamp
+  num_upvotes integer [not null, default: 0]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+  deleted_at timestamp
+
+  indexes {
+    number [name: 'issues_number_idx']
+    title [name: 'issues_title_idx']
+    state [name: 'issues_state_idx']
+    area_id [name: 'issues_area_id_idx']
+    crag_id [name: 'issues_crag_id_idx']
+    wall_id [name: 'issues_wall_id_idx']
+    organization_id [name: 'issues_organization_id_idx']
+  }
+}
+
+table media {
+  id uuid [pk, not null]
+  content_type varchar(256) [not null]
+  url text [not null]
+  issue_id uuid [not null]
+  issue_action_id uuid
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+  deleted_at timestamp
+
+  indexes {
+    issue_id [name: 'issue_media_issue_id_idx']
+  }
+}
+
+table organizations {
+  id uuid [pk, not null]
+  name varchar(256) [not null]
+  slug varchar(256) [not null]
+  num_issues integer [not null, default: 0]
+  donate_url varchar(256)
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+  deleted_at timestamp
+
+  indexes {
+    name [name: 'organizations_name_idx', unique]
+  }
+}
+
+table routes {
+  id uuid [pk, not null]
+  name varchar(256) [not null]
+  grade varchar(256) [not null]
+  wall_id uuid [not null]
+  type varchar(256) [not null]
+  status varchar(256)
+  anchor_type varchar(256) [not null]
+  is_2_bolt_anchor boolean [not null, default: false]
+  num_bolts integer [not null, default: 0]
+  num_pins integer [not null, default: 0]
+  stars integer [not null, default: 0]
+  bolt_types text[] [not null, default: `'{}'::text[]`]
+  organization_id uuid [not null]
+  last_worked_on_at timestamp
+  last_worked_on_by uuid
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+  deleted_at timestamp
+
+  indexes {
+    name [name: 'routes_name_idx']
+    organization_id [name: 'routes_organization_id_idx']
+  }
+}
+
+table taggings {
+  tag_id uuid [not null]
+  organization_id uuid [not null]
+  area_id uuid [not null]
+  crag_id uuid [not null]
+  wall_id uuid [not null]
+  issue_id uuid [not null]
+  route_id uuid [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+  deleted_at timestamp
+}
+
+table tags {
+  id uuid [pk, not null]
+  name varchar(256) [not null]
+  color varchar(7) [not null]
+  type varchar(256) [not null]
+  organization_id uuid [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+  deleted_at timestamp
+
+  indexes {
+    (name, organization_id, type) [name: 'tags_name_idx', unique]
+    type [name: 'tags_type_idx']
+    organization_id [name: 'tags_organization_id_idx']
+  }
+}
+
+table users {
+  id uuid [pk, not null]
+  name varchar(255) [not null]
+  email varchar(255) [not null, unique]
+}
+
+table users_to_organizations {
+  role varchar(256)
+  organization_id uuid [not null]
+  user_id uuid [not null]
+
+  indexes {
+    organization_id [name: 'users_to_organizations_organization_id_idx']
+    user_id [name: 'users_to_organizations_user_id_idx']
+  }
+}
+
+table walls {
+  id uuid [pk, not null]
+  name varchar(256) [not null]
+  organization_id uuid [not null]
+  crag_id uuid [not null]
+  description text [not null]
+  image_url varchar(256)
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+  deleted_at timestamp
+
+  indexes {
+    name [name: 'walls_name_idx']
+    organization_id [name: 'walls_organization_id_idx']
+    crag_id [name: 'walls_crag_id_idx']
+  }
+}
+
+ref areas_organization_id_organizations_id_fk: areas.organization_id > organizations.id [delete: cascade, update: no action]
+
+ref crags_organization_id_organizations_id_fk: crags.organization_id > organizations.id [delete: cascade, update: no action]
+
+ref crags_area_id_areas_id_fk: crags.area_id > areas.id [delete: cascade, update: no action]
+
+ref issue_actions_organization_id_organizations_id_fk: issue_actions.organization_id > organizations.id [delete: cascade, update: no action]
+
+ref issue_actions_issue_id_issues_id_fk: issue_actions.issue_id > issues.id [delete: cascade, update: no action]
+
+ref issue_actions_user_id_users_id_fk: issue_actions.user_id > users.id [delete: cascade, update: no action]
+
+ref issue_actions_referenced_issue_id_issues_id_fk: issue_actions.referenced_issue_id > issues.id [delete: cascade, update: no action]
+
+ref issue_assignees_issue_id_issues_id_fk: issue_assignees.issue_id > issues.id [delete: cascade, update: no action]
+
+ref issue_assignees_user_id_users_id_fk: issue_assignees.user_id > users.id [delete: cascade, update: no action]
+
+ref issue_upvotes_issue_id_issues_id_fk: issue_upvotes.issue_id > issues.id [delete: cascade, update: no action]
+
+ref issue_upvotes_user_id_users_id_fk: issue_upvotes.user_id > users.id [delete: cascade, update: no action]
+
+ref issues_organization_id_organizations_id_fk: issues.organization_id > organizations.id [delete: cascade, update: no action]
+
+ref issues_area_id_areas_id_fk: issues.area_id > areas.id [delete: cascade, update: no action]
+
+ref issues_crag_id_crags_id_fk: issues.crag_id > crags.id [delete: cascade, update: no action]
+
+ref issues_wall_id_walls_id_fk: issues.wall_id > walls.id [delete: cascade, update: no action]
+
+ref issues_route_id_routes_id_fk: issues.route_id > routes.id [delete: cascade, update: no action]
+
+ref issues_created_by_id_users_id_fk: issues.created_by_id > users.id [delete: cascade, update: no action]
+
+ref issues_closed_by_id_users_id_fk: issues.closed_by_id > users.id [delete: cascade, update: no action]
+
+ref media_issue_id_issues_id_fk: media.issue_id > issues.id [delete: cascade, update: no action]
+
+ref media_issue_action_id_issue_actions_id_fk: media.issue_action_id > issue_actions.id [delete: cascade, update: no action]
+
+ref routes_wall_id_walls_id_fk: routes.wall_id > walls.id [delete: cascade, update: no action]
+
+ref routes_organization_id_organizations_id_fk: routes.organization_id > organizations.id [delete: cascade, update: no action]
+
+ref routes_last_worked_on_by_users_id_fk: routes.last_worked_on_by > users.id [delete: cascade, update: no action]
+
+ref taggings_tag_id_tags_id_fk: taggings.tag_id > tags.id [delete: cascade, update: no action]
+
+ref taggings_organization_id_organizations_id_fk: taggings.organization_id > organizations.id [delete: cascade, update: no action]
+
+ref taggings_area_id_areas_id_fk: taggings.area_id > areas.id [delete: cascade, update: no action]
+
+ref taggings_crag_id_crags_id_fk: taggings.crag_id > crags.id [delete: cascade, update: no action]
+
+ref taggings_wall_id_walls_id_fk: taggings.wall_id > walls.id [delete: cascade, update: no action]
+
+ref taggings_issue_id_issues_id_fk: taggings.issue_id > issues.id [delete: cascade, update: no action]
+
+ref taggings_route_id_routes_id_fk: taggings.route_id > routes.id [delete: cascade, update: no action]
+
+ref tags_organization_id_organizations_id_fk: tags.organization_id > organizations.id [delete: cascade, update: no action]
+
+ref users_to_organizations_organization_id_organizations_id_fk: users_to_organizations.organization_id > organizations.id [delete: cascade, update: no action]
+
+ref users_to_organizations_user_id_users_id_fk: users_to_organizations.user_id > users.id [delete: cascade, update: no action]
+
+ref walls_organization_id_organizations_id_fk: walls.organization_id > organizations.id [delete: cascade, update: no action]
+
+ref walls_crag_id_crags_id_fk: walls.crag_id > crags.id [delete: cascade, update: no action]

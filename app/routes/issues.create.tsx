@@ -21,37 +21,31 @@ import {
   SelectValue,
 } from '~/components/ui/select'
 import { db } from '~/db/db'
-import { areasTable, issuesTable } from '~/db/schema'
-import { max } from 'drizzle-orm'
+import { areasTable, issuesTable, organizationsTable } from '~/db/schema'
+import { eq, max } from 'drizzle-orm'
 import { Link, useLoaderData, type ActionFunctionArgs } from 'react-router'
+import { RouteBoltTypeEnum, type RouteBoltType } from '~/enums/routes'
+import ComboBox from '~/components/ui/combobox'
+import { IssueBoltIssueTypeEnum, IssueSeverityEnum } from '~/enums/issues'
 
 const IssueCreateSchema = z
   .object({
     title: z.string().min(1, { message: 'Title is required' }),
-    routeName: z.string().min(1, { message: 'Route name is required' }),
-    description: z.string().min(1, { message: 'Description is required' }),
-    area: z.string().min(1, { message: 'Area is required' }),
-    boltType: z.string().min(1, { message: 'Bolt Type is required' }),
+    route: z.string().min(1, { message: 'Route name is required' }),
+    text: z.string().min(1, { message: 'Description is required' }),
+    boltType: RouteBoltTypeEnum,
     boltOrAnchor: z.enum(['bolt', 'anchor'], {
       required_error: 'Please select either bolt or anchor',
     }),
-    boltNumber: z.string().optional(),
-    boltIssue: z.enum(
-      ['spinner', 'worn', 'missing', 'rusted', 'placement', 'other'],
-      {
-        required_error: 'Please select an issue',
-      },
-    ),
-    severity: z
-      .number()
-      .min(1, { message: 'Severity is required' })
-      .max(5, { message: 'Severity must be between 1 and 5' }),
+    boltNumber: z.number().optional(),
+    boltIssue: IssueBoltIssueTypeEnum,
+    severity: IssueSeverityEnum,
   })
   .refine(
     (data) => {
       // If boltOrAnchor is 'bolt', then boltNumber is required
       if (data.boltOrAnchor === 'bolt') {
-        return !!data.boltNumber && data.boltNumber.trim() !== ''
+        return !!data.boltNumber && data.boltNumber !== 0
       }
       // Otherwise, boltNumber is optional
       return true
@@ -69,60 +63,102 @@ export async function action({ request }: ActionFunctionArgs) {
   const data = Object.fromEntries(formData)
   const issue = IssueCreateSchema.parse(data)
 
-  const description = `
-	Route Name: ${issue.routeName}
-	Bolt or Anchor?: ${issue.boltOrAnchor}
-	Bolt Type: ${issue.boltType}
-	Bolt Number: ${issue.boltNumber}
-	Bolt Issue: ${issue.boltIssue}
-	Severity: ${issue.severity}
-	------------
-	Description:
-	${issue.description}
-	`
+  const route = issue.route.split('/')
+  const areaId = route[0]
+  const cragId = route[1]
+  const wallId = route[2]
+  const routeId = route[3]
+
   const lastNumberRes = await db
     .select({ value: max(issuesTable.id) })
     .from(issuesTable)
   const lastNumber = parseInt(lastNumberRes[0]?.value || '0')
   const number = lastNumber ? lastNumber + 1 : 1
+  const org = await db.query.organizationsTable.findFirst({
+    where: eq(organizationsTable.name, 'NRAC'),
+  })
+  if (!org) {
+    throw new Error('Organization not found')
+  }
+
   await db.insert(issuesTable).values({
     title: issue.title,
-    description: description,
-    areaId: issue.area,
-    organizationId: '1',
+    text: issue.text,
+    severity: issue.severity,
+    areaId: areaId,
+    cragId: cragId,
+    wallId: wallId,
+    routeId: routeId,
+    type: issue.boltType,
+    boltOrAnchor: issue.boltOrAnchor,
+    boltNumber: issue.boltNumber,
+    organizationId: org.id,
     createdById: '1',
     number,
   })
 }
 
 export async function loader() {
-  const areas = await db.select().from(areasTable)
-  const boltTypeOptions = [
-    { value: '1', label: '5 Piece and Hanger' },
-    { value: '2', label: 'Stud Bolt and Hanger' },
-    { value: '3', label: 'Glue In' },
-    { value: '4', label: 'Cold Shuts' },
-    { value: '5', label: 'Other' },
-  ]
+  const org = await db.query.organizationsTable.findFirst({
+    with: {
+      areas: true,
+      crags: true,
+      walls: true,
+      routes: true,
+    },
+    where: eq(organizationsTable.name, 'NRAC'),
+  })
+  if (!org) {
+    throw new Error('Organization not found')
+  }
+  const areaDict = org.areas.reduce((acc, a) => {
+    acc[a.id] = { id: a.id, name: a.name }
+    return acc
+  }, {} as Record<string, { id: string; name: string }>)
+  const cragDict = org.crags.reduce((acc, c) => {
+    acc[c.id] = { id: c.id, name: c.name, areaId: c.areaId }
+    return acc
+  }, {} as Record<string, { id: string; name: string; areaId: string }>)
+  const wallDict = org.walls.reduce((acc, w) => {
+    acc[w.id] = { id: w.id, name: w.name, cragId: w.cragId }
+    return acc
+  }, {} as Record<string, { id: string; name: string; cragId: string }>)
+  const routeOptions = org.routes.map((r) => {
+    const wall = wallDict[r.wallId]
+    const crag = cragDict[wall.cragId]
+    const area = areaDict[crag.areaId]
+    return {
+      value: `${area.id}/${crag.id}/${wall.id}/${r.id}`,
+      label: `${area.name}/${crag.name}/${wall.name}/${r.name}`,
+    }
+  })
+  const routeDict = org.routes.reduce((acc, r) => {
+    acc[r.id] = r.name
+    return acc
+  }, {} as Record<string, string>)
+  const boltTypeOptions = Object.values(RouteBoltTypeEnum.Values).map((b) => ({
+    value: b,
+    label: b,
+  }))
   return {
-    areaOptions: areas.map((a) => ({ value: a.id, label: a.name })),
+    routeOptions,
     boltTypeOptions,
   }
 }
 
 export default function IssueCreate() {
-  const { areaOptions, boltTypeOptions } = useLoaderData<typeof loader>()
+  const { routeOptions, boltTypeOptions } = useLoaderData<typeof loader>()
   const form = useForm<IssueCreateFormValues>({
     resolver: zodResolver(IssueCreateSchema),
     defaultValues: {
       title: '',
-      description: '',
-      area: '',
-      boltType: '',
-      boltOrAnchor: undefined,
-      boltNumber: '',
-      boltIssue: undefined,
-      severity: undefined,
+      text: '',
+      route: '',
+      boltType: RouteBoltTypeEnum.enum['5 Piece and Hanger'],
+      boltOrAnchor: 'bolt',
+      boltNumber: 0,
+      boltIssue: IssueBoltIssueTypeEnum.enum.Spinner,
+      severity: IssueSeverityEnum.enum['1'],
     },
   })
 
@@ -159,43 +195,18 @@ export default function IssueCreate() {
             />
             <FormField
               control={form.control}
-              name="routeName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Route Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Route name" {...field} />
-                  </FormControl>
-                  <FormDescription>The name of the route</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="area"
+              name="route"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Area</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select an area" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {areaOptions.map((area) => (
-                        <SelectItem key={area.value} value={area.value}>
-                          {area.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Route</FormLabel>
+                  <ComboBox
+                    placeholder="Select a route"
+                    options={routeOptions}
+                    value={field.value}
+                    onChangeValue={field.onChange}
+                  />
                   <FormDescription>
-                    The area where the bolt needs to be replaced
+                    The route where the bolt needs to be replaced
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -345,7 +356,7 @@ export default function IssueCreate() {
             <div>
               <FormField
                 control={form.control}
-                name="description"
+                name="text"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Description</FormLabel>

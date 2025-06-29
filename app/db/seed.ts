@@ -1,41 +1,25 @@
 import { db } from './db'
 import {
   areasTable,
-  commentsTable,
+  cragsTable,
   issuesTable,
   organizationsTable,
+  routesTable,
   tagsTable,
   usersTable,
   usersToOrganizationsTable,
+  wallsTable,
 } from './schema'
 import { faker } from '@faker-js/faker'
+import { eq } from 'drizzle-orm'
+import seedRoutes from './seeds/seed-routes'
+import {
+  IssueBoltIssueTypeEnum,
+  IssueSeverityEnum,
+  IssueTypeEnum,
+} from '~/enums/issues'
+import { RouteBoltTypeEnum } from '~/enums/routes'
 const emojis = ['👍', '👎', '❤️', '😂']
-
-const nrccAreaNames = [
-  'Summersville',
-  'Whipporwill',
-  'Upper Meadow',
-  'Lower Meadow',
-  'Bridge Buttress',
-  'Fern Buttress',
-  'Endless Wall',
-  'Beauty Mountain',
-  'Kaymoor',
-  'South Nuttal',
-  'Cotton Top',
-  'Cottom Bottom',
-  'Hawksnest',
-]
-
-const cccAreaNames = [
-  'Looking Glass',
-  'Linville Gorge',
-  'Ship Rock',
-  'Grandmother Mountain',
-  'Blowing Rock',
-  'Corner Rock',
-  'Pilot Mountain',
-]
 
 async function createAdmins(orgName: string) {
   const values = [1, 2].map((num) => ({
@@ -67,26 +51,12 @@ async function createAdminsToOrg(
   return db.insert(usersToOrganizationsTable).values(values).returning()
 }
 
-async function createAreas(
-  orgId: string,
-  areaNames: string[],
-  tags: Awaited<ReturnType<typeof createTags>>,
-) {
-  const areaTags = tags.filter((tag) => tag.type === 'area')
-  const tag = areaTags[Math.floor(Math.random() * areaTags.length)]
-  const values = areaNames.map((name) => ({
-    name,
-    description: faker.lorem.paragraph(),
-    organizationId: orgId,
-    imageUrl: faker.image.url(),
-    tags: [tag.name],
-  }))
-  return db.insert(areasTable).values(values).returning()
-}
-
 async function createIssues(
   orgId: string,
-  areas: Awaited<ReturnType<typeof createAreas>>,
+  areas: Awaited<ReturnType<typeof getAreas>>,
+  crags: Awaited<ReturnType<typeof getCrags>>,
+  walls: Awaited<ReturnType<typeof getWalls>>,
+  routes: Awaited<ReturnType<typeof getRoutes>>,
   admins: Awaited<ReturnType<typeof createAdmins>>,
   users: Awaited<ReturnType<typeof createUsers>>,
   tags: Awaited<ReturnType<typeof createTags>>,
@@ -98,88 +68,46 @@ async function createIssues(
     const userId2 = users[Math.floor(Math.random() * users.length)]
     const admin = admins[Math.floor(Math.random() * admins.length)]
     const areaId = areas[Math.floor(Math.random() * areas.length)].id
+    const cragsInArea = crags.filter((crag) => crag.areaId === areaId)
+    const cragId =
+      cragsInArea[Math.floor(Math.random() * cragsInArea.length)].id
+    const wallsInCrag = walls.filter((wall) => wall.cragId === cragId)
+    const wallId =
+      wallsInCrag[Math.floor(Math.random() * wallsInCrag.length)].id
+    const routesInCrag = routes.filter((route) => route.wallId === wallId)
+    const routeId =
+      routesInCrag[Math.floor(Math.random() * routesInCrag.length)].id
+    const severities = Object.values(IssueSeverityEnum.Values)
+    const severity = severities[Math.floor(Math.random() * severities.length)]
+    const boltTypes = Object.values(RouteBoltTypeEnum.Values)
+    const boltType = boltTypes[Math.floor(Math.random() * boltTypes.length)]
+    const types = Object.values(IssueTypeEnum.Values)
+    const type = types[Math.floor(Math.random() * types.length)]
+    const boltIssues = Object.values(IssueBoltIssueTypeEnum.Values)
+    const boltIssue = boltIssues[Math.floor(Math.random() * boltIssues.length)]
     return {
-      title: faker.hacker.phrase(),
-      description: faker.lorem.paragraph(),
-      organizationId: orgId,
-      areaId,
-      state: 'open',
       number: index + 1,
+      type,
+      title: faker.hacker.phrase(),
+      text: faker.lorem.paragraph(),
+      severity,
+      boltOrAnchor: 'bolt',
+      organizationId: orgId,
+      boltNumber: Math.floor(Math.random() * 12),
+      boltIssue,
+      areaId,
+      cragId,
+      wallId,
+      routeId,
+      state: 'open',
       createdById: userId,
-      numComments: Math.floor(Math.random() * 10),
+      boltType,
+      numUpvotes: 0,
       assigneeIds: [admin.id],
-      reactions: [
-        {
-          userId: userId2.id,
-          userName: userId2.name,
-          emoji: emojis[Math.floor(Math.random() * emojis.length)],
-          createdAt: new Date().toISOString(),
-        },
-      ],
       tags: [tag.name],
     }
   })
   return db.insert(issuesTable).values(values).returning()
-}
-
-async function createComments(
-  issues: Awaited<ReturnType<typeof createIssues>>,
-  users: Awaited<ReturnType<typeof createUsers>>,
-  adminsToOrg: Awaited<ReturnType<typeof createAdminsToOrg>>,
-) {
-  const values = issues.flatMap((issue) => {
-    const userId1 = users[Math.floor(Math.random() * users.length)].id
-    const userId2 = users[Math.floor(Math.random() * users.length)].id
-    const userId3 = users[Math.floor(Math.random() * users.length)]
-    const adminId = adminsToOrg.filter(
-      (ato) => ato.organizationId === issue.organizationId,
-    )[Math.floor(Math.random() * 2)].userId
-    return [
-      {
-        issueId: issue.id,
-        organizationId: issue.organizationId,
-        userId: userId1,
-        body: faker.lorem.sentences(Math.floor(Math.random() * 3)),
-        reactions: [
-          {
-            userId: userId3.id,
-            userName: userId3.name,
-            emoji: emojis[Math.floor(Math.random() * emojis.length)],
-            createdAt: new Date().toISOString(),
-          },
-        ],
-      },
-      {
-        issueId: issue.id,
-        organizationId: issue.organizationId,
-        userId: userId2,
-        body: faker.lorem.sentences(Math.floor(Math.random() * 3)),
-        reactions: [
-          {
-            userId: userId3.id,
-            userName: userId3.name,
-            emoji: emojis[Math.floor(Math.random() * emojis.length)],
-            createdAt: new Date().toISOString(),
-          },
-        ],
-      },
-      {
-        issueId: issue.id,
-        organizationId: issue.organizationId,
-        userId: adminId,
-        body: faker.lorem.sentences(Math.floor(Math.random() * 3)),
-        reactions: [
-          {
-            userId: userId3.id,
-            userName: userId3.name,
-            emoji: emojis[Math.floor(Math.random() * emojis.length)],
-            createdAt: new Date().toISOString(),
-          },
-        ],
-      },
-    ]
-  })
-  return db.insert(commentsTable).values(values).returning()
 }
 
 async function createTags(orgId: string) {
@@ -189,8 +117,8 @@ async function createTags(orgId: string) {
     { name: '🚧 safety', color: '#fdba74' },
     { name: '🛠️ bolt replacement', color: '#fca5a5' },
   ]
-  const areaTags = [
-    { name: '⛔ area closed', color: '#fca5a5' },
+  const cragTags = [
+    { name: '⛔ crag closed', color: '#fca5a5' },
     { name: '🟨 sensitive access', color: '#fdba74' },
     { name: '🟢 no access issues', color: '#4ade80' },
     { name: '🚗 limited parking', color: '#d8b4fe' },
@@ -202,21 +130,48 @@ async function createTags(orgId: string) {
     organizationId: orgId,
     color: tag.color,
   }))
-  const areaValues = areaTags.map((tag) => ({
+  const cragValues = cragTags.map((tag) => ({
     name: tag.name,
-    type: 'area',
+    type: 'crag',
     organizationId: orgId,
     color: tag.color,
   }))
   return db
     .insert(tagsTable)
-    .values([...issueValues, ...areaValues])
+    .values([...issueValues, ...cragValues])
     .returning()
+}
+
+async function getAreas(orgId: string) {
+  return db
+    .select()
+    .from(areasTable)
+    .where(eq(areasTable.organizationId, orgId))
+}
+
+async function getCrags(orgId: string) {
+  return db
+    .select()
+    .from(cragsTable)
+    .where(eq(cragsTable.organizationId, orgId))
+}
+
+async function getWalls(orgId: string) {
+  return db
+    .select()
+    .from(wallsTable)
+    .where(eq(wallsTable.organizationId, orgId))
+}
+
+async function getRoutes(orgId: string) {
+  return db
+    .select()
+    .from(routesTable)
+    .where(eq(routesTable.organizationId, orgId))
 }
 
 async function createOrganzation(
   orgName: string,
-  areaNames: string[],
   users: Awaited<ReturnType<typeof createUsers>>,
 ) {
   const orgs = await db
@@ -227,9 +182,21 @@ async function createOrganzation(
   const admins = await createAdmins(org.name)
   const adminsToOrg = await createAdminsToOrg(org.id, admins)
   const tags = await createTags(org.id)
-  const areas = await createAreas(org.id, areaNames, tags)
-  const issues = await createIssues(org.id, areas, admins, users, tags)
-  await createComments(issues, users, adminsToOrg)
+  await seedRoutes(org.id)
+  const areas = await getAreas(org.id)
+  const crags = await getCrags(org.id)
+  const walls = await getWalls(org.id)
+  const routes = await getRoutes(org.id)
+  const issues = await createIssues(
+    org.id,
+    areas,
+    crags,
+    walls,
+    routes,
+    admins,
+    users,
+    tags,
+  )
 }
 
 async function seed() {
@@ -239,12 +206,10 @@ async function seed() {
   await db.delete(usersTable)
   await db.delete(areasTable)
   await db.delete(issuesTable)
-  await db.delete(commentsTable)
   await db.delete(tagsTable)
   console.log('Seeding database...')
   const users = await createUsers()
-  await createOrganzation('NRAC', nrccAreaNames, users)
-  await createOrganzation('CCC', cccAreaNames, users)
+  await createOrganzation('NRAC', users)
   console.log('Database seeded successfully!')
   return process.exit(0)
 }
