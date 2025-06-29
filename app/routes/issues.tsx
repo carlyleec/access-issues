@@ -1,17 +1,16 @@
 import { Table, TableBody, TableCell, TableRow } from '~/components/ui/table'
 import { z } from 'zod'
 import { BasicPagination } from '~/components/ui/basic-pagination'
-import { MessageSquare, Bookmark, BookmarkCheck } from 'lucide-react'
+import { Bookmark, BookmarkCheck, ThumbsUp } from 'lucide-react'
 import { FacetedFilter } from '~/components/ui/faceted-filter'
 import { Input } from '~/components/ui/input'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { db } from '~/db/db'
-import { and, arrayContains, eq, ilike, inArray } from 'drizzle-orm'
+import { and, eq, ilike, inArray, isNotNull } from 'drizzle-orm'
 import { issuesTable, usersTable } from '~/db/schema'
 import { format } from 'date-fns'
 import {
-  Form,
   Link,
   useLoaderData,
   useSearchParams,
@@ -23,8 +22,7 @@ const IssueSchema = z.object({
   title: z.string(),
   number: z.number().int().positive(),
   state: z.enum(['open', 'closed']),
-  tags: z.array(z.string()),
-  numComments: z.number().int(),
+  numUpvotes: z.number().int(),
   createdById: z.string().uuid(),
   createdAt: z.coerce.date(),
   createdByName: z.string(),
@@ -38,7 +36,6 @@ const IssueFilters = z.object({
   search: z.string().optional(),
   state: z.enum(['open', 'closed']).default('open'),
   authors: z.array(z.string()).optional(),
-  tags: z.array(z.string()).optional(),
 })
 
 type IssueFilters = z.infer<typeof IssueFilters>
@@ -50,9 +47,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const authorFilter = filters.authors
     ? [inArray(issuesTable.createdById, filters.authors)]
     : []
-  const tagFilter = filters.tags
-    ? [arrayContains(issuesTable.tags, filters.tags)]
-    : []
   const searchFilter = filters.search
     ? [ilike(issuesTable.title, `%${filters.search}%`)]
     : []
@@ -61,7 +55,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     : []
 
   const issues = await db.query.issuesTable.findMany({
-    where: and(...authorFilter, ...tagFilter, ...searchFilter, ...stateFilter),
+    where: and(...authorFilter, ...searchFilter, ...stateFilter),
     with: {
       createdBy: true,
     },
@@ -70,22 +64,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
   })
 
   const authorOptions = await db
-    .selectDistinct({ value: issuesTable.createdById, label: usersTable.name })
+    .selectDistinct({ value: usersTable.id, label: usersTable.name })
     .from(issuesTable)
-    .innerJoin(usersTable, eq(issuesTable.createdById, usersTable.id))
-
-  const tags = await db.query.tagsTable.findMany({})
-  const tagOptions = tags.map((t) => ({
-    value: t.id,
-    label: t.name,
-  }))
+    .rightJoin(usersTable, eq(issuesTable.createdById, usersTable.id))
+    .where(isNotNull(issuesTable.createdById))
 
   // Count the number of issues that are not the current state
   const otherCount = await db.$count(
     issuesTable,
     and(
       ...authorFilter,
-      ...tagFilter,
       ...searchFilter,
       eq(issuesTable.state, filters.state === 'open' ? 'closed' : 'open'),
     ),
@@ -93,12 +81,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const totalCount = await db.$count(
     issuesTable,
-    and(...authorFilter, ...tagFilter, ...searchFilter, ...stateFilter),
+    and(...authorFilter, ...searchFilter, ...stateFilter),
   )
 
   const rows = issues.map((i) => ({
     ...i,
-    createdByName: i.createdBy.name,
+    createdByName: i.createdBy?.name ?? '',
   }))
 
   return {
@@ -107,8 +95,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     openCount: filters.state === 'open' ? totalCount : otherCount,
     closedCount: filters.state === 'closed' ? totalCount : otherCount,
     authorOptions,
-    tagOptions,
-    tags,
   }
 }
 
@@ -138,14 +124,6 @@ function IssuesTable({
                       <BookmarkCheck className="text-green-700 h-4 w-4 " />
                     )}
                     <p className="text-lg font-bold">{issue.title}</p>
-                    {issue.tags.map((tag) => (
-                      <Badge
-                        key={tag}
-                        style={{ backgroundColor: getTagColor(tag) }}
-                      >
-                        {tag}
-                      </Badge>
-                    ))}
                   </div>
                   <p className="text-gray-600 text-sm ml-5">
                     #{issue.number} {issue.createdByName} opened{' '}
@@ -157,9 +135,9 @@ function IssuesTable({
             <TableCell>
               <Link to={`/issues/${issue.number}`}>
                 <div className="flex justify-center items-center space-x-1  ">
-                  <MessageSquare className="text-gray-400 h-4 w-4" />
+                  <ThumbsUp className="text-gray-400 h-4 w-4" />
                   <p className="text-xs flex text-gray-400">
-                    {issue.numComments}
+                    {issue.numUpvotes}
                   </p>
                 </div>
               </Link>
@@ -245,24 +223,6 @@ export default function Issues() {
                 }}
                 options={data.authorOptions}
               />
-              <FacetedFilter
-                title="Tags"
-                values={filters.tags ? filters.tags : []}
-                onChange={(values) => {
-                  if (values.length === 0) {
-                    setSearch((prev) => {
-                      prev.delete('tags')
-                      return prev
-                    })
-                  } else {
-                    setSearch((prev) => {
-                      prev.set('tags', values.join(','))
-                      return prev
-                    })
-                  }
-                }}
-                options={data.tagOptions}
-              />
             </div>
           </div>
         </div>
@@ -271,7 +231,7 @@ export default function Issues() {
         </div>
         <IssuesTable
           rows={data.rows.map((r) => IssueSchema.parse(r))}
-          tags={data.tags}
+          tags={[]}
         />
       </div>
       <BasicPagination totalRowCount={data.totalCount} />

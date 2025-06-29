@@ -15,20 +15,19 @@ import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Card, CardContent, CardFooter, CardHeader } from '~/components/ui/card'
-import { Textarea } from '~/components/ui/textarea'
 import { z } from 'zod'
 import { eq, inArray } from 'drizzle-orm'
-import { issuesTable, usersTable } from '~/db/schema'
+import { issueAssigneesTable, issuesTable, usersTable } from '~/db/schema'
 import { db } from '~/db/db'
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
 
 const IssueDetailSchema = z.object({
   id: z.string(),
   title: z.string(),
-  description: z.string(),
+  text: z.string(),
   number: z.number(),
   state: z.string(),
-  numComments: z.number(),
+  numUpvotes: z.number(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   closedAt: z.coerce.date().nullable(),
@@ -39,25 +38,18 @@ const IssueDetailSchema = z.object({
     id: z.string(),
     name: z.string(),
   }),
-  comments: z.array(
-    z.object({
-      id: z.string(),
-      body: z.string(),
-      createdAt: z.coerce.date(),
-      updatedAt: z.coerce.date(),
-      reactions: z.array(
-        z.object({
-          userId: z.string(),
-          userName: z.string(),
-          emoji: z.string(),
-        }),
-      ),
-      commenter: z.object({
-        id: z.string(),
-        name: z.string(),
-      }),
-    }),
-  ),
+  crag: z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
+  wall: z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
+  route: z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
   createdBy: z.object({
     id: z.string(),
     name: z.string(),
@@ -72,14 +64,6 @@ const IssueDetailSchema = z.object({
       name: z.string(),
     }),
   ),
-  tags: z.array(z.string()),
-  reactions: z.array(
-    z.object({
-      userId: z.string(),
-      userName: z.string(),
-      emoji: z.string(),
-    }),
-  ),
 })
 
 export async function loader({ params }: Route.LoaderArgs) {
@@ -87,25 +71,25 @@ export async function loader({ params }: Route.LoaderArgs) {
     where: eq(issuesTable.number, parseInt(params.number)),
     with: {
       area: true,
-      comments: {
-        with: {
-          commenter: true,
-        },
-      },
+      crag: true,
+      wall: true,
+      route: true,
       createdBy: true,
       closedBy: true,
+      assignees: {
+        with: {
+          user: true,
+        },
+      },
     },
   })
   if (!issue) {
     throw new Error('Issue not found')
   }
 
-  const assignees = await db.query.usersTable.findMany({
-    where: inArray(usersTable.id, issue?.assigneeIds || []),
-  })
   return IssueDetailSchema.parse({
     ...issue,
-    assignees,
+    assignees: issue.assignees.map((assignee) => assignee.user),
   })
 }
 
@@ -124,8 +108,8 @@ export default function IssueDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm">
-            <MessageSquare className="h-4 w-4 mr-1" />
-            {issue.numComments} Comments
+            <ThumbsUp className="h-4 w-4 mr-1" />
+            {issue.numUpvotes} Upvotes
           </Button>
           <Button variant="outline" size="sm">
             <Flag className="h-4 w-4 mr-1" />
@@ -161,10 +145,6 @@ export default function IssueDetailPage() {
           <MapPin className="h-4 w-4" />
           <span>Area: {issue.area.name}</span>
         </div>
-        <div className="flex items-center gap-1">
-          <Tag className="h-4 w-4" />
-          <span>Tags: {issue.tags.join(', ')}</span>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -191,21 +171,9 @@ export default function IssueDetailPage() {
               </div>
             </CardHeader>
             <CardContent className="prose prose-sm max-w-none">
-              <p>{issue.description}</p>
+              <p>{issue.text}</p>
             </CardContent>
             <CardFooter className="flex justify-between pt-2">
-              <div className="flex gap-1">
-                {issue.reactions.map((reaction, index) => (
-                  <Badge
-                    key={index}
-                    variant="outline"
-                    className="flex items-center gap-1"
-                  >
-                    <span>{reaction.emoji}</span>
-                    <span className="text-xs">{reaction.userName}</span>
-                  </Badge>
-                ))}
-              </div>
               <div className="flex gap-1">
                 <Button variant="ghost" size="sm">
                   <ThumbsUp className="h-4 w-4 mr-1" />
@@ -214,74 +182,6 @@ export default function IssueDetailPage() {
               </div>
             </CardFooter>
           </Card>
-
-          {/* Comments */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Comments</h2>
-            {issue.comments.map((comment) => (
-              <Card key={comment.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-2">
-                    <Avatar>
-                      <AvatarImage
-                        src={`https://avatar.vercel.sh/${comment.commenter.name}`}
-                      />
-                      <AvatarFallback>
-                        {comment.commenter.name.substring(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">
-                        {comment.commenter.name}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(comment.createdAt, {
-                          addSuffix: true,
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="prose prose-sm max-w-none">
-                  <p>{comment.body}</p>
-                </CardContent>
-                <CardFooter className="flex justify-between pt-2">
-                  <div className="flex gap-1">
-                    {comment.reactions.map((reaction, index) => (
-                      <Badge
-                        key={index}
-                        variant="outline"
-                        className="flex items-center gap-1"
-                      >
-                        <span>{reaction.emoji}</span>
-                        <span className="text-xs">{reaction.userName}</span>
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="sm">
-                      <ThumbsUp className="h-4 w-4 mr-1" />
-                      React
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
-            ))}
-
-            {/* New Comment Form */}
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-medium">Add a comment</h3>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  placeholder="Leave a comment..."
-                  className="min-h-[100px] mb-4"
-                />
-                <Button>Submit</Button>
-              </CardContent>
-            </Card>
-          </div>
         </div>
 
         {/* Sidebar */}
@@ -302,17 +202,8 @@ export default function IssueDetailPage() {
 
               <div>
                 <div className="text-sm font-medium mb-1">Area</div>
-                <div className="text-sm">{issue.area.name}</div>
-              </div>
-
-              <div>
-                <div className="text-sm font-medium mb-1">Tags</div>
-                <div className="flex flex-wrap gap-1">
-                  {issue.tags.map((tag, index) => (
-                    <Badge key={index} variant="outline">
-                      {tag}
-                    </Badge>
-                  ))}
+                <div className="text-sm">
+                  {`${issue.area.name} > ${issue.crag.name} > ${issue.wall.name} > ${issue.route.name}`}
                 </div>
               </div>
 
