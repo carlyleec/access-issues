@@ -1,5 +1,12 @@
 import { google } from "googleapis";
 import { JWT } from "google-auth-library";
+import { z } from "zod";
+import { 
+  IssueTypeEnum, 
+  IssueSeverityEnum, 
+  IssueBoltIssueTypeEnum, 
+  IssueAnchorIssueTypeEnum 
+} from "../enums/issues";
 
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
 
@@ -90,10 +97,10 @@ export interface Report {
   timestamp: string;
   areaName: string;
   routeName: string;
-  boltOrAnchorType: string;
+  boltOrAnchorType: z.infer<typeof IssueTypeEnum>;
   boltNumber: string;
-  issue: string;
-  severity: string;
+  issue: z.infer<typeof IssueBoltIssueTypeEnum> | z.infer<typeof IssueAnchorIssueTypeEnum>;
+  severity: z.infer<typeof IssueSeverityEnum>;
   description: string;
   emailAddress?: string;
   wallName: string;
