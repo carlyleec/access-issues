@@ -7,16 +7,13 @@ import {
   IssueBoltIssueTypeEnum, 
   IssueAnchorIssueTypeEnum 
 } from "../enums/issues";
+import { env } from "../env";
 
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
 
-if (!process.env.GOOGLE_CLIENT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
-  throw new Error("Google service account credentials are not set in .env");
-}
-
 const auth = new JWT({
-  email: process.env.GOOGLE_CLIENT_EMAIL,
-  key: process.env.GOOGLE_PRIVATE_KEY,
+  email: env.GOOGLE_CLIENT_EMAIL,
+  key: env.GOOGLE_PRIVATE_KEY,
   scopes: SCOPES,
 });
 
@@ -111,7 +108,7 @@ export interface Report {
 
 export class ReportSheetService extends GoogleSheetsService {
   constructor() {
-    super(process.env.GOOGLE_SHEETS_REPORT_SHEET_ID as string);
+    super(env.GOOGLE_SHEETS_REPORT_SHEET_ID);
   }
 
   async getReports(): Promise<Report[]> {
