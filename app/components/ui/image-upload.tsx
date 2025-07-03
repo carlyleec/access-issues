@@ -1,8 +1,8 @@
-import { useRef, useState } from 'react';
-import { Button } from './button';
-import { Input } from './input';
-import { useImageUpload } from '../../lib/hooks/useImageUpload';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { useRef, useState } from "react";
+import { Button } from "./button";
+import { Input } from "./input";
+import { useImageUpload } from "../../lib/hooks/useImageUpload";
+import { Upload, X, Image as ImageIcon } from "lucide-react";
 
 interface ImageUploadProps {
   onUploadSuccess?: (url: string, filename: string) => void;
@@ -17,15 +17,16 @@ export function ImageUpload({
   onUploadSuccess,
   onUploadError,
   disabled = false,
-  className = '',
-  accept = 'image/*',
-  maxSizeMB = 5,
+  className = "",
+  accept = "image/*",
+  maxSizeMB = 4.5,
 }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
-  
-  const { uploadImage, isUploading, error, url, filename, reset } = useImageUpload();
+
+  const { uploadImage, isUploading, error, url, filename, reset } =
+    useImageUpload();
 
   // Handle successful upload
   if (url && filename && !isUploading) {
@@ -59,9 +60,9 @@ export function ImageUpload({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragActive(false);
-    
+
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file && file.type.startsWith("image/")) {
       handleFileSelect(file);
     }
   };
@@ -79,7 +80,7 @@ export function ImageUpload({
     setPreview(null);
     reset();
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -104,11 +105,12 @@ export function ImageUpload({
         className={`
           relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
           transition-colors duration-200
-          ${dragActive 
-            ? 'border-primary bg-primary/5' 
-            : 'border-gray-300 hover:border-gray-400'
+          ${
+            dragActive
+              ? "border-primary bg-primary/5"
+              : "border-gray-300 hover:border-gray-400"
           }
-          ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}
+          ${disabled || isUploading ? "opacity-50 cursor-not-allowed" : ""}
         `}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -118,7 +120,7 @@ export function ImageUpload({
         {preview || url ? (
           <div className="relative">
             <img
-              src={preview || url || ''}
+              src={preview || url || ""}
               alt="Upload preview"
               className="max-w-full max-h-48 mx-auto rounded-lg"
             />
@@ -151,10 +153,11 @@ export function ImageUpload({
             <div>
               <p className="text-sm text-gray-600">
                 {isUploading ? (
-                  'Uploading...'
+                  "Uploading..."
                 ) : (
                   <>
-                    <span className="font-medium">Click to upload</span> or drag and drop
+                    <span className="font-medium">Click to upload</span> or drag
+                    and drop
                   </>
                 )}
               </p>
@@ -189,7 +192,7 @@ export function ImageUpload({
         className="w-full"
       >
         <Upload className="h-4 w-4 mr-2" />
-        {isUploading ? 'Uploading...' : 'Choose Image'}
+        {isUploading ? "Uploading..." : "Choose Image"}
       </Button>
     </div>
   );
