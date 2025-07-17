@@ -1,4 +1,4 @@
-import type { RouteGrade, RouteType } from '~/enums/routes'
+import type { RouteGrade, RouteType } from '~/constants/enums/routes'
 import { db } from '../db'
 import { areasTable, cragsTable, routesTable, wallsTable } from '../schema'
 import { newRiverRoutes } from './new-river-routes'

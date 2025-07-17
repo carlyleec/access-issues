@@ -24,9 +24,12 @@ import { db } from '~/db/db'
 import { areasTable, issuesTable, organizationsTable } from '~/db/schema'
 import { eq, max } from 'drizzle-orm'
 import { Link, useLoaderData, type ActionFunctionArgs } from 'react-router'
-import { RouteBoltTypeEnum, type RouteBoltType } from '~/enums/routes'
+import { RouteBoltTypeEnum, type RouteBoltType } from '~/constants/enums/routes'
 import ComboBox from '~/components/ui/combobox'
-import { IssueBoltIssueTypeEnum, IssueSeverityEnum } from '~/enums/issues'
+import {
+  IssueBoltIssueTypeEnum,
+  IssueSeverityEnum,
+} from '~/constants/enums/issues'
 
 const IssueCreateSchema = z
   .object({

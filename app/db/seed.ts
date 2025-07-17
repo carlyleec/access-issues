@@ -17,8 +17,8 @@ import {
   IssueBoltIssueTypeEnum,
   IssueSeverityEnum,
   IssueTypeEnum,
-} from '~/enums/issues'
-import { RouteBoltTypeEnum } from '~/enums/routes'
+} from '~/constants/enums/issues'
+import { RouteBoltTypeEnum } from '~/constants/enums/routes'
 import { AuthorizationRoleEnum } from '~/constants/enums/authorization-role-enum'
 const emojis = ['👍', '👎', '❤️', '😂']
 
