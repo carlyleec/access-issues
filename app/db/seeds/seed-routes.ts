@@ -34,7 +34,6 @@ async function seedRoutes(organizationId: string) {
 }
 
 async function seedNewRiverRoutes(organizationId: string, newRiverId: string) {
-  console.log('seedNewRiverRoutes', organizationId, newRiverId)
   type NewRiverSeedRoute = (typeof newRiverRoutes)[0]
   const newRiverCrags: Record<
     string,

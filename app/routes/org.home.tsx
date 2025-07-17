@@ -1,20 +1,7 @@
 import type { Route } from './+types/home'
+import { Link } from 'react-router'
 import { Button } from '~/components/ui/button'
-import { ArrowRight, MapPin, AlertTriangle, Building2 } from 'lucide-react'
-import { Link, useLoaderData } from 'react-router'
-import { app } from '~/.server/app'
-import { Card, CardTitle, CardHeader, CardContent } from '~/components/ui/card'
-import { Navbar } from '~/components/ui/navbar'
-import { useState } from 'react'
-import {
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '~/components/ui/command'
+import { ArrowRight, MapPin, AlertTriangle } from 'lucide-react'
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -27,65 +14,9 @@ export function meta({}: Route.MetaArgs) {
   ]
 }
 
-export async function loader() {
-  const organizations = await app.listAllOrgs()
-  if (organizations.error) {
-    return {
-      organizations: [],
-    }
-  }
-  return { organizations: organizations.data }
-}
-
 export default function HomePage() {
-  const { organizations } = useLoaderData<typeof loader>()
-  const [open, setOpen] = useState(false)
-
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Command Dialog */}
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Search organizations..." />
-        <CommandList>
-          <CommandEmpty>No organization found.</CommandEmpty>
-          <CommandGroup heading="Organizations">
-            {organizations.map((organization) => (
-              <CommandItem
-                key={organization.id}
-                onSelect={() => {
-                  setOpen(false)
-                  window.location.href = `/${organization.slug}`
-                }}
-              >
-                <Link
-                  to={`/${organization.slug}`}
-                  className="w-full flex justify-center items-center"
-                >
-                  <div className="flex flex-col items-center gap-2 w-full">
-                    <div className="flex items-center gap-2 w-full">
-                      {organization.logoUrl && (
-                        <img
-                          src={organization.logoUrl}
-                          alt={organization.name}
-                          className="h-4  mr-2"
-                        />
-                      )}
-                      <span>{organization.name}</span>
-                    </div>
-                    <div className="ml-auto text-xs text-muted-foreground">
-                      {organization.description}
-                    </div>
-                  </div>
-                  <div className="ml-auto">
-                    <ArrowRight className="h-4 w-4" />
-                  </div>
-                </Link>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </CommandList>
-      </CommandDialog>
-
       {/* Hero Section */}
       <div className="relative h-[600px] flex items-center justify-center">
         {/* Hero Image */}
@@ -99,24 +30,45 @@ export default function HomePage() {
 
         {/* Hero Content */}
         <div className="relative z-10 text-center text-white px-4 max-w-4xl mx-auto">
-          <p className="text-xl md:text-3xl mb-8 max-w-2xl mx-auto">
-            Report and track safety and access issues with your local climbing
-            organization
+          <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            Protect Climbing Access
+          </h1>
+          <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto">
+            Report and track access issues to help maintain climbing areas for
+            future generations
           </p>
-          <Button
-            onClick={() => setOpen(true)}
-            className="text-lg"
-            variant="secondary"
-          >
-            Find my organization
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              asChild
+              size="lg"
+              className="text-lg bg-white text-foreground"
+            >
+              <Link to="/issues/create">
+                Report an Issue
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Features Section */}
       <div className="py-10 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row gap-10 mb-10 justify-center">
+            <Button asChild variant="outline" size="lg" className="text-lg">
+              <Link to="/areas">
+                View Areas
+                <MapPin className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="text-lg">
+              <Link to="/issues">
+                View Issues
+                <AlertTriangle className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+          </div>
           <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
@@ -161,6 +113,12 @@ export default function HomePage() {
             Join the community of climbers working to maintain access to our
             favorite climbing areas
           </p>
+          <Button asChild size="lg" className="text-lg">
+            <Link to="/issues/create">
+              Report an Issue
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

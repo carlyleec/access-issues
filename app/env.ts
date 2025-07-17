@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
-import { createEnv } from "@t3-oss/env-core";
-import { z } from "zod";
+import { createEnv } from '@t3-oss/env-core'
+import { z } from 'zod'
 
 export const env = createEnv({
   /**
@@ -9,8 +9,8 @@ export const env = createEnv({
    */
   server: {
     NODE_ENV: z
-      .enum(["development", "test", "production"])
-      .default("development"),
+      .enum(['development', 'test', 'production'])
+      .default('development'),
     POSTGRES_URL: z.string().url(),
     GOOGLE_SHEETS_REPORT_SHEET_ID: z.string().min(1),
     // think this might be necessary at some point
@@ -18,6 +18,11 @@ export const env = createEnv({
     GOOGLE_PRIVATE_KEY: z.string().min(1),
     GOOGLE_CLIENT_EMAIL: z.string().email(),
     BLOB_READ_WRITE_TOKEN: z.string().min(1),
+    WEB_SESSION_SECRET: z.string().min(1),
+    TOKEN_SECRET: z.string().min(1),
+    FROM_EMAIL: z.string().email(),
+    SEND_GRID_API_KEY: z.string().min(1),
+    SITE_URL: z.string().url(),
   },
 
   /**
@@ -41,6 +46,15 @@ export const env = createEnv({
     GOOGLE_PRIVATE_KEY: process.env.GOOGLE_PRIVATE_KEY,
     GOOGLE_CLIENT_EMAIL: process.env.GOOGLE_CLIENT_EMAIL,
     BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
+    WEB_SESSION_SECRET: process.env.WEB_SESSION_SECRET,
+    TOKEN_SECRET: process.env.TOKEN_SECRET,
+    FROM_EMAIL: process.env.FROM_EMAIL,
+    SEND_GRID_API_KEY: process.env.SEND_GRID_API_KEY,
+    SITE_URL:
+      process.env.VERCEL_ENV === 'production' ||
+      process.env.VERCEL_ENV === 'development'
+        ? process.env.SITE_URL
+        : `https://${process.env.VERCEL_URL}`,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
@@ -52,4 +66,4 @@ export const env = createEnv({
    * `SOME_VAR=''` will throw an error.
    */
   emptyStringAsUndefined: true,
-});
+})

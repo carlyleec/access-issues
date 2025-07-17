@@ -92,6 +92,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return {
     totalCount,
     rows,
+    organizationName: 'NRAC',
     openCount: filters.state === 'open' ? totalCount : otherCount,
     closedCount: filters.state === 'closed' ? totalCount : otherCount,
     authorOptions,
@@ -116,7 +117,7 @@ function IssuesTable({
           <TableRow key={issue.id}>
             <TableCell>
               <Link to={`/issues/${issue.number}`}>
-                <div className="flex flex-col items-start">
+                <div className="flex flex-col items-start px-2">
                   <div className="flex  items-center space-x-1">
                     {issue.state === 'open' ? (
                       <Bookmark className="text-red-700 h-4 w-4" />
@@ -225,9 +226,6 @@ export default function Issues() {
               />
             </div>
           </div>
-        </div>
-        <div>
-          <Link to="/issues/2"> Issue</Link>
         </div>
         <IssuesTable
           rows={data.rows.map((r) => IssueSchema.parse(r))}
