@@ -1,4 +1,4 @@
-import type { Route } from './+types/issue'
+import type { Route } from './+types/org.issue'
 import { formatDistanceToNow } from 'date-fns'
 import {
   MessageSquare,

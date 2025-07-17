@@ -30,8 +30,10 @@ export const organizationsTable = pgTable(
     id: uuid('id').primaryKey().$defaultFn(uuidv7),
     name: varchar('name', { length: 256 }).notNull(),
     slug: varchar('slug', { length: 256 }).notNull(),
+    description: text('description').notNull(),
     numIssues: integer('num_issues').notNull().default(0),
     donateUrl: varchar('donate_url', { length: 256 }),
+    logoUrl: varchar('logo_url', { length: 256 }),
     ...timestamps,
   },
   (organizations) => {
@@ -56,6 +58,9 @@ export const usersTable = pgTable('users', {
   id: uuid('id').primaryKey().$defaultFn(uuidv7),
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull().unique(),
+  otpHash: varchar('otp_hash', { length: 255 }),
+  tokenHash: varchar('token_hash', { length: 255 }),
+  ...timestamps,
 })
 
 export const userRelations = relations(usersTable, ({ many }) => ({
@@ -68,7 +73,7 @@ export const userRelations = relations(usersTable, ({ many }) => ({
 export const usersToOrganizationsTable = pgTable(
   'users_to_organizations',
   {
-    role: varchar('role', { length: 256 }),
+    role: varchar('role', { length: 256 }).notNull(),
     organizationId: uuid('organization_id')
       .notNull()
       .references(() => organizationsTable.id, { onDelete: 'cascade' }),
@@ -96,7 +101,7 @@ export const usersToOrganizationsRelations = relations(
       references: [usersTable.id],
       relationName: 'user',
     }),
-    issue: one(organizationsTable, {
+    organization: one(organizationsTable, {
       fields: [usersToOrganizationsTable.organizationId],
       references: [organizationsTable.id],
       relationName: 'organization',

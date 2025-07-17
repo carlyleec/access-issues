@@ -8,6 +8,27 @@
       "when": 1751227187195,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1752440940521,
+      "tag": "0001_add_auth_hashes_to_users_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1752448834158,
+      "tag": "0002_add_logo_url_to_orgs",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1752451048247,
+      "tag": "0003_add_description_to_org",
+      "breakpoints": true
     }
   ]
 }

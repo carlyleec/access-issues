@@ -19,6 +19,7 @@ import {
   IssueTypeEnum,
 } from '~/enums/issues'
 import { RouteBoltTypeEnum } from '~/enums/routes'
+import { AuthorizationRoleEnum } from '~/constants/enums/authorization-role-enum'
 const emojis = ['👍', '👎', '❤️', '😂']
 
 async function createAdmins(orgName: string) {
@@ -46,6 +47,7 @@ async function createAdminsToOrg(
     return {
       organizationId: orgId,
       userId: admin.id,
+      role: AuthorizationRoleEnum.enum.ORGANIZATION_ADMIN,
     }
   })
   return db.insert(usersToOrganizationsTable).values(values).returning()
@@ -174,39 +176,42 @@ async function createOrganzation(
   orgName: string,
   users: Awaited<ReturnType<typeof createUsers>>,
 ) {
+  const description =
+    'We exists to preserve and promote access to climbing areas, and to conserve climbing resources in the New River Gorge and surrounding areas'
   const orgs = await db
     .insert(organizationsTable)
-    .values({ name: orgName, slug: orgName.toLowerCase(), numIssues: 200 })
+    .values({
+      name: orgName,
+      slug: orgName.toLowerCase(),
+      description,
+      logoUrl:
+        'https://www.newriverclimbing.net/uploads/1/0/9/8/109883188/nrac-main-black-transparent.jpg',
+    })
     .returning()
   const org = orgs[0]
   const admins = await createAdmins(org.name)
-  const adminsToOrg = await createAdminsToOrg(org.id, admins)
+  await createAdminsToOrg(org.id, admins)
   const tags = await createTags(org.id)
   await seedRoutes(org.id)
   const areas = await getAreas(org.id)
   const crags = await getCrags(org.id)
   const walls = await getWalls(org.id)
   const routes = await getRoutes(org.id)
-  const issues = await createIssues(
-    org.id,
-    areas,
-    crags,
-    walls,
-    routes,
-    admins,
-    users,
-    tags,
-  )
+  await createIssues(org.id, areas, crags, walls, routes, admins, users, tags)
 }
 
-async function seed() {
-  console.log('Clearing existing data...')
+async function deleteAllData() {
   await db.delete(usersToOrganizationsTable)
   await db.delete(organizationsTable)
   await db.delete(usersTable)
   await db.delete(areasTable)
   await db.delete(issuesTable)
   await db.delete(tagsTable)
+}
+
+async function seed() {
+  console.log('Clearing existing data...')
+  await deleteAllData()
   console.log('Seeding database...')
   const users = await createUsers()
   await createOrganzation('NRAC', users)

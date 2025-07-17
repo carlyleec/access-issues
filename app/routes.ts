@@ -6,12 +6,21 @@ import {
 } from '@react-router/dev/routes'
 
 export default [
-  index('routes/home.tsx'),
   layout('routes/layout.tsx', [
-    route('areas', 'routes/areas.tsx'),
-    route('areas/:id', 'routes/area.tsx'),
-    route('issues', 'routes/issues.tsx'),
-    route('issues/create', 'routes/issues.create.tsx'),
-    route('issues/:number', 'routes/issue.tsx'),
+    index('routes/home.tsx'),
+    // route(':org/', 'routes/org.home.tsx'),
+    // route(':org/areas', 'routes/org.areas.tsx'),
+    // route(':org/areas/:id', 'routes/org.area.tsx'),
+    route(':org', 'routes/org.issues.tsx'),
+    route(':org/issues/create', 'routes/org.issues.create.tsx'),
+    route(':org/issues/:number', 'routes/org.issue.tsx'),
+    layout('routes/org.settings.layout.tsx', [
+      route(':org/settings', 'routes/org.settings.tsx'),
+      route(':org/settings/members', 'routes/org.settings.members.tsx'),
+      route(':org/settings/routes', 'routes/org.settings.routes.tsx'),
+    ]),
+    route('login', 'routes/login.tsx'),
+    route('login/:token', 'routes/login.token.tsx'),
+    route('logout', 'routes/logout.tsx'),
   ]),
 ] satisfies RouteConfig
