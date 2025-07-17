@@ -12,8 +12,15 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
-import type { RouteBoltType, RouteGrade, RouteType } from '~/enums/routes'
-import type { IssueBoltIssueType, IssueSeverity } from '~/enums/issues'
+import type {
+  RouteBoltType,
+  RouteGrade,
+  RouteType,
+} from '~/constants/enums/routes'
+import type {
+  IssueBoltIssueType,
+  IssueSeverity,
+} from '~/constants/enums/issues'
 
 const timestamps = {
   createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
