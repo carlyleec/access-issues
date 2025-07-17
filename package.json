@@ -7,6 +7,7 @@
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
+    "test": "vitest",
     "db:gen:dbml": "node --import tsx --env-file .env ./app/db/dbml.ts",
     "db:gen:migration": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -69,6 +70,7 @@
     "tsx": "^4.19.3",
     "typescript": "^5.7.2",
     "vite": "^5.4.11",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.2.4"
   }
 }

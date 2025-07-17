@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 import { z } from 'zod'
 import { env } from '~/env'
 
-import { type ResultType, catchToResult, ok } from '~/lib/result'
+import { type ResultType, catchToResult, err, ok } from '~/lib/result'
 
 import { AppError } from './result'
 import { hash } from './hash'
@@ -62,6 +62,13 @@ export function validate(
 
     return ok(parsed.data)
   } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return err(
+        new AppError('TOKEN', 'Invalid Token', {
+          data: { token },
+        }),
+      )
+    }
     return catchToResult(error, {
       data: { token },
     })

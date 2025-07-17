@@ -50,7 +50,6 @@ async function execute(
       userId: user.id,
       email: user.email,
       name: user.name,
-      organizationSelected: false,
     })
   } catch (error) {
     return catchToResult(error, {

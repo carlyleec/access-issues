@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs'
 
-import { catchToResult, ok } from '~/lib/result'
+import { AppError, catchToResult, err, ok } from '~/lib/result'
 
 export async function hash(value: string) {
   try {
@@ -14,7 +14,14 @@ export async function hash(value: string) {
 
 export async function compare(value: string, hashedValue: string) {
   try {
-    return ok(bcrypt.compare(value, hashedValue))
+    const res = await bcrypt.compare(value, hashedValue)
+    if (!res)
+      return err(
+        new AppError('HASH', 'Invalid hash', {
+          data: { value, hashedValue },
+        }),
+      )
+    return ok(res)
   } catch (error) {
     return catchToResult(error, {
       data: { value, hashedValue },
