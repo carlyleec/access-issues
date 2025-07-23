@@ -23,6 +23,7 @@ export const env = createEnv({
     FROM_EMAIL: z.string().email(),
     SEND_GRID_API_KEY: z.string().min(1),
     SITE_URL: z.string().url(),
+    DEV_EMAIL: z.string().email(),
   },
 
   /**
@@ -55,6 +56,7 @@ export const env = createEnv({
       process.env.VERCEL_ENV === 'development'
         ? process.env.SITE_URL
         : `https://${process.env.VERCEL_URL}`,
+    DEV_EMAIL: process.env.DEV_EMAIL || 'example@example.com',
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

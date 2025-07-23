@@ -20,20 +20,24 @@ import {
 } from '~/constants/enums/issues'
 import { RouteBoltTypeEnum } from '~/constants/enums/routes'
 import { AuthorizationRoleEnum } from '~/constants/enums/authorization-role-enum'
-const emojis = ['👍', '👎', '❤️', '😂']
+import { env } from '~/env'
 
 async function createAdmins(orgName: string) {
+  const devEmailParts = env.DEV_EMAIL.split('@')
   const values = [1, 2].map((num) => ({
     name: `${orgName} Admin ${num}`,
-    email: `carlyleec+${orgName.toLowerCase()}_admin${num}`,
+    email: `${devEmailParts[0]}+${orgName.toLowerCase()}${num}@${
+      devEmailParts[1]
+    }`,
   }))
 
   return db.insert(usersTable).values(values).returning()
 }
 
 async function createUsers() {
+  const devEmailParts = env.DEV_EMAIL.split('@')
   const values = [1, 2, 3, 4].map((num) => ({
-    email: `carlyleec+${num}@gmail.com`,
+    email: `${devEmailParts[0]}+${num}@${devEmailParts[1]}`,
     name: `User ${num}`,
   }))
   return db.insert(usersTable).values(values).returning()
