@@ -213,9 +213,13 @@ export default function IssueCreate() {
         }
       }
     }
+  }, [route])
+
+  useEffect(() => {
     if (wall) {
       const wallData = walls.find((w) => w.id === wall)
       if (wallData) {
+        form.setValue('route', '')
         setRouteOptions(
           routes
             .filter((r) => r.wallId === wallData.id)
@@ -231,10 +235,15 @@ export default function IssueCreate() {
         }
       }
     }
+  }, [wall])
+
+  useEffect(() => {
     if (crag) {
       const cragData = crags.find((c) => c.id === crag)
       if (cragData) {
         form.setValue('area', cragData.areaId)
+        form.setValue('wall', '')
+        form.setValue('route', '')
         setWallOptions(
           walls
             .filter((w) => w.cragId === cragData.id)
@@ -245,9 +254,15 @@ export default function IssueCreate() {
         )
       }
     }
+  }, [crag])
+
+  useEffect(() => {
     if (area) {
       const areaData = areas.find((a) => a.id === area)
       if (areaData) {
+        form.setValue('crag', '')
+        form.setValue('wall', '')
+        form.setValue('route', '')
         setCragOptions(
           crags
             .filter((c) => c.areaId === areaData.id)
@@ -258,7 +273,7 @@ export default function IssueCreate() {
         )
       }
     }
-  }, [area, crag, wall, route])
+  }, [area])
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
