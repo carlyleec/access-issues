@@ -11,6 +11,7 @@ import { authenticated, logout, setSession, withSession } from './session'
 import { newGetRoleCmd } from './commands/get-role-cmd'
 import { newGetOrgMembersCmd } from './commands/get-org-members-cmd'
 import { newRemoveOrgMemberCmd } from './commands/remove-org-member-cmd'
+import { newGetOrgRouteDataCmd } from './commands/get-org-route-data-cmd'
 
 // Repos
 const userRepo = newUserRepo()
@@ -33,12 +34,14 @@ const createOrgUserCmd = newCreateOrgUserCmd(
 const sendOtpCmd = newSendOtpCmd(emailService, userRepo)
 const listAllOrgsCmd = newListAllOrgsCmd(organizationRepo)
 const removeOrgMemberCmd = newRemoveOrgMemberCmd(organizationRepo, userRepo)
+const getOrgRouteDataCmd = newGetOrgRouteDataCmd(organizationRepo)
 
 export const app = {
   authenticate: authenticateCmd,
   createOrgUser: createOrgUserCmd,
   inviteUser: inviteUserCmd,
   getOrg: getOrgCmd,
+  getOrgRouteData: getOrgRouteDataCmd,
   getOrgMembers: getOrgMembersCmd,
   getRole: getRoleCmd,
   listAllOrgs: listAllOrgsCmd,

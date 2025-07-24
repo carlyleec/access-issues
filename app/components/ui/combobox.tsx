@@ -1,6 +1,6 @@
 import { useCombobox } from 'downshift'
 import { ChevronsUpDown } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { alphabetizeOptions } from '~/lib/sort'
 
@@ -58,6 +58,10 @@ function ComboBox({
       return item ? item.label : ''
     },
   })
+
+  useEffect(() => {
+    setItems(options)
+  }, [options])
 
   return (
     <div className="relative">
