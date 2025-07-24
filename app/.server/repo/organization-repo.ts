@@ -17,6 +17,18 @@ export async function bySlug(slug: string) {
   })
 }
 
+export async function bySlugWithRouteData(slug: string) {
+  return await db.query.organizationsTable.findFirst({
+    where: eq(organizationsTable.slug, slug),
+    with: {
+      areas: true,
+      crags: true,
+      walls: true,
+      routes: true,
+    },
+  })
+}
+
 export async function getOrganizationRole(
   organizationId: string,
   userId: string,
@@ -45,6 +57,7 @@ export async function getOrganizationMembers(organizationId: string) {
 export function newOrganizationRepo() {
   return {
     bySlug,
+    bySlugWithRouteData,
     listAll,
     getOrganizationMembers,
     getOrganizationRole,

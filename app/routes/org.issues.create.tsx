@@ -21,19 +21,30 @@ import {
   SelectValue,
 } from '~/components/ui/select'
 import { db } from '~/db/db'
-import { areasTable, issuesTable, organizationsTable } from '~/db/schema'
+import { issuesTable, organizationsTable } from '~/db/schema'
 import { eq, max } from 'drizzle-orm'
-import { Link, useLoaderData, type ActionFunctionArgs } from 'react-router'
+import {
+  Link,
+  useLoaderData,
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+} from 'react-router'
 import { RouteBoltTypeEnum, type RouteBoltType } from '~/constants/enums/routes'
 import ComboBox from '~/components/ui/combobox'
 import {
   IssueBoltIssueTypeEnum,
   IssueSeverityEnum,
 } from '~/constants/enums/issues'
+import { app } from '~/.server/app'
+import { useEffect, useState } from 'react'
+import { AppError } from '~/lib/result'
 
 const IssueCreateSchema = z
   .object({
     title: z.string().min(1, { message: 'Title is required' }),
+    area: z.string().min(1, { message: 'Area is required' }),
+    crag: z.string().min(1, { message: 'Crag is required' }),
+    wall: z.string().min(1, { message: 'Wall is required' }),
     route: z.string().min(1, { message: 'Route name is required' }),
     text: z.string().min(1, { message: 'Description is required' }),
     boltType: RouteBoltTypeEnum,
@@ -101,56 +112,34 @@ export async function action({ request }: ActionFunctionArgs) {
   })
 }
 
-export async function loader() {
-  const org = await db.query.organizationsTable.findFirst({
-    with: {
-      areas: true,
-      crags: true,
-      walls: true,
-      routes: true,
-    },
-    where: eq(organizationsTable.name, 'NRAC'),
-  })
-  if (!org) {
+export async function loader({ params }: LoaderFunctionArgs) {
+  if (!params.org) {
     throw new Error('Organization not found')
   }
-  const areaDict = org.areas.reduce((acc, a) => {
-    acc[a.id] = { id: a.id, name: a.name }
-    return acc
-  }, {} as Record<string, { id: string; name: string }>)
-  const cragDict = org.crags.reduce((acc, c) => {
-    acc[c.id] = { id: c.id, name: c.name, areaId: c.areaId }
-    return acc
-  }, {} as Record<string, { id: string; name: string; areaId: string }>)
-  const wallDict = org.walls.reduce((acc, w) => {
-    acc[w.id] = { id: w.id, name: w.name, cragId: w.cragId }
-    return acc
-  }, {} as Record<string, { id: string; name: string; cragId: string }>)
-  const routeOptions = org.routes.map((r) => {
-    const wall = wallDict[r.wallId]
-    const crag = cragDict[wall.cragId]
-    const area = areaDict[crag.areaId]
-    return {
-      value: `${area.id}/${crag.id}/${wall.id}/${r.id}`,
-      label: `${area.name}/${crag.name}/${wall.name}/${r.name}`,
-    }
-  })
-  const routeDict = org.routes.reduce((acc, r) => {
-    acc[r.id] = r.name
-    return acc
-  }, {} as Record<string, string>)
+  const org = await app.getOrgRouteData(params.org)
+  if (org.error) {
+    console.error(org.error)
+    throw new AppError('Organization param not found', 'org.issues.create', {
+      data: params.org,
+    })
+  }
+  const { areas, crags, walls, routes } = org.data
   const boltTypeOptions = Object.values(RouteBoltTypeEnum.Values).map((b) => ({
     value: b,
     label: b,
   }))
   return {
-    routeOptions,
+    areas,
+    crags,
+    walls,
+    routes,
     boltTypeOptions,
   }
 }
 
 export default function IssueCreate() {
-  const { routeOptions, boltTypeOptions } = useLoaderData<typeof loader>()
+  const { areas, crags, walls, routes, boltTypeOptions } =
+    useLoaderData<typeof loader>()
   const form = useForm<IssueCreateFormValues>({
     resolver: zodResolver(IssueCreateSchema),
     defaultValues: {
@@ -164,11 +153,112 @@ export default function IssueCreate() {
       severity: IssueSeverityEnum.enum['1'],
     },
   })
+  const [routeOptions, setRouteOptions] = useState<
+    {
+      value: string
+      label: string
+    }[]
+  >(
+    routes.map((r) => ({
+      value: r.id,
+      label: `${r.name} ${r.grade}`,
+    })),
+  )
+  const [wallOptions, setWallOptions] = useState<
+    {
+      value: string
+      label: string
+    }[]
+  >(
+    walls.map((w) => ({
+      value: w.id,
+      label: w.name,
+    })),
+  )
+  const [cragOptions, setCragOptions] = useState<
+    {
+      value: string
+      label: string
+    }[]
+  >(
+    crags.map((c) => ({
+      value: c.id,
+      label: c.name,
+    })),
+  )
 
   function onSubmit(data: IssueCreateFormValues) {
     console.log(data)
     //  createIssue({ data: data })
   }
+
+  const area = form.watch('area')
+  const crag = form.watch('crag')
+  const wall = form.watch('wall')
+  const route = form.watch('route')
+
+  // Update area, crag, wall, route based on the selected area, crag, wall, route
+  useEffect(() => {
+    if (route) {
+      const routeData = routes.find((r) => r.id === route)
+      if (routeData) {
+        form.setValue('wall', routeData.wallId)
+        const wallData = walls.find((w) => w.id === routeData.wallId)
+        if (wallData) {
+          form.setValue('crag', wallData.cragId)
+          const cragData = crags.find((c) => c.id === wallData.cragId)
+          if (cragData) {
+            form.setValue('area', cragData.areaId)
+          }
+        }
+      }
+    }
+    if (wall) {
+      const wallData = walls.find((w) => w.id === wall)
+      if (wallData) {
+        setRouteOptions(
+          routes
+            .filter((r) => r.wallId === wallData.id)
+            .map((r) => ({
+              value: r.id,
+              label: `${r.name} ${r.grade}`,
+            })),
+        )
+        form.setValue('crag', wallData.cragId)
+        const cragData = crags.find((c) => c.id === wallData.cragId)
+        if (cragData) {
+          form.setValue('area', cragData.areaId)
+        }
+      }
+    }
+    if (crag) {
+      const cragData = crags.find((c) => c.id === crag)
+      if (cragData) {
+        form.setValue('area', cragData.areaId)
+        setWallOptions(
+          walls
+            .filter((w) => w.cragId === cragData.id)
+            .map((w) => ({
+              value: w.id,
+              label: w.name,
+            })),
+        )
+      }
+    }
+    if (area) {
+      const areaData = areas.find((a) => a.id === area)
+      if (areaData) {
+        setCragOptions(
+          crags
+            .filter((c) => c.areaId === areaData.id)
+            .map((c) => ({
+              value: c.id,
+              label: c.name,
+            })),
+        )
+      }
+    }
+  }, [area, crag, wall, route])
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
@@ -191,6 +281,67 @@ export default function IssueCreate() {
                   <FormDescription>
                     A clear and concise title for your issue. e.g. "Spinner on
                     Bolt 3 of Lost Souls"
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="area"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormLabel>Area</FormLabel>
+                  <ComboBox
+                    placeholder="Select an area"
+                    options={areas.map((a) => ({
+                      value: a.id,
+                      label: a.name,
+                    }))}
+                    value={field.value}
+                    onChangeValue={field.onChange}
+                  />
+                  <FormDescription>
+                    The route where the bolt needs to be replaced
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="crag"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormLabel>Crag</FormLabel>
+                  <ComboBox
+                    key={area}
+                    placeholder="Select a crag"
+                    options={cragOptions}
+                    value={field.value}
+                    onChangeValue={field.onChange}
+                  />
+                  <FormDescription>
+                    The route where the bolt needs to be replaced
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="wall"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormLabel>Wall</FormLabel>
+                  <ComboBox
+                    placeholder="Select a wall"
+                    options={wallOptions}
+                    value={field.value}
+                    onChangeValue={field.onChange}
+                  />
+                  <FormDescription>
+                    The route where the bolt needs to be replaced
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
